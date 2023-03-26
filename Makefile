@@ -10,20 +10,20 @@
 #                                                                              #
 # **************************************************************************** #
 
-NAME = philo
+NAME = minishell
 
-CC = cc
+CC = cc 
 
-CFLAGS= -Wall -Werror -Wextra 
+##CFLAGS= -Wall -Werror -Wextra 
 
-SRC =   main.c 
+SRC =  main.c ft_split.c libft_utils.c
 
 OBJ = ${SRC:.c=.o}
 
 all : ${NAME}
 
 ${NAME} : ${OBJ}
-	@$(CC)  $(OBJ) -o ${NAME} 
+	@$(CC)  $(OBJ) -o ${NAME} -lreadline
 
 clean :
 	rm -f ${OBJ} 
