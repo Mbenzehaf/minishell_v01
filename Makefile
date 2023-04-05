@@ -14,16 +14,17 @@ NAME = minishell
 
 CC = cc 
 
-##CFLAGS= -Wall -Werror -Wextra 
+#CFLAGS= -Wall -Werror -Wextra 
 
-SRC =  main.c ft_split.c libft_utils.c
+SRC =  main.c ft_split.c libft_utils.c utils.c
 
 OBJ = ${SRC:.c=.o}
 
 all : ${NAME}
 
 ${NAME} : ${OBJ}
-	@$(CC)  $(OBJ) -o ${NAME} -lreadline
+	@$(CC)  $(OBJ) -o ${NAME} -lreadline 
+#-fsanitize=address
 
 clean :
 	rm -f ${OBJ} 
