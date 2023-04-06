@@ -196,6 +196,7 @@ void	ft_dtadd_back(t_data **lst, t_data *new)
 	{
 		while (node->next)
 			node = node->next;
+			new->prev = node;
 		node->next = new;
 	}
 	else

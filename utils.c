@@ -81,11 +81,13 @@ void ft_full_data(t_list *list,t_data **data)
 	int fdin;
 	int fdout;
 	char *str;
-	int *fd;
+	int fd[2];
 	char *h_doc;
+	int is_pipe;
 
 	fdin = -2;
 	fdout = -2;
+	is_pipe = 0;
 	str = NULL;
 	h_doc = NULL;
 	if(!list)
@@ -96,6 +98,7 @@ void ft_full_data(t_list *list,t_data **data)
 		{
 			str = ft_strjoin(str,(char[]){3,0});
 			str = ft_strjoin(str,list->content);
+			//str = ft_strjoin(ft_strjoin(str,(char[]){3,0}),list->content);
 		}
 		else if(list->token == FILE_IN)
 		{
@@ -108,9 +111,9 @@ void ft_full_data(t_list *list,t_data **data)
 			fdout = open(list->content,O_CREAT|O_WRONLY|O_APPEND,0644);
 		}else if (list->token == TOKEN_HEREDOC)
 		{
-			fd = malloc(sizeof(int)*2);
-				if (pipe(fd))
-					(perror("pipe"), exit(1));
+			//fd = malloc(sizeof(int)*2);
+			if (pipe(fd))
+				(perror("pipe"), exit(1));
 			while (list->next)
 			{
 				h_doc = readline(">");
@@ -128,7 +131,26 @@ void ft_full_data(t_list *list,t_data **data)
 		}
 		if(list->token == TOKEN_PIPE || !list->next)
 		{
+			if(list->token == TOKEN_PIPE)
+				{
+					if(fdout == -2)
+					{
+					if (pipe(fd))
+						(perror("pipe"), exit(1));
+					fdout=fd[1];
+					is_pipe = 1;
+					}
+				}
 			ft_dtadd_back(data,ft_dtnew(ft_split(str,3),fdin,fdout));
+			free(str);
+			str = NULL;
+			if(is_pipe)
+			{
+				fdin = fd[0];
+				is_pipe = 0;
+			}else
+				fdin = -2;
+			fdout = -2;
 		}
 		list = list->next;
 	}

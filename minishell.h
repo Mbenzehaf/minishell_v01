@@ -41,6 +41,7 @@ typedef struct s_data
 	int				fdin;
 	char			**arg;
 	struct s_data	*next;
+	struct s_data	*prev;
 	pid_t			pid;
 	int				is_pipein;
 	int				is_pipeout;

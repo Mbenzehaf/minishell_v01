@@ -47,6 +47,7 @@ void ft_minishell(t_list *list)
 }*/
 void ft_exection(t_data *data,t_env **env)
 {
+    static int i;
     int status;
     while (data)
     {
@@ -58,10 +59,20 @@ void ft_exection(t_data *data,t_env **env)
             }
         if(data->pid==0)
         {
-            if(data->fdin > 2)
-                dup2(data->fdin,STDIN_FILENO);
-            if(data->fdout > 2)
-                dup2(data->fdout,STDOUT_FILENO);
+           // printf("%s\n",data->arg[0]);
+          if(data->fdin > 2 && i==1)
+                {
+                    if(data->prev->fdout> 2)
+                     close(data->fdout);
+                    dup2(data->fdin,STDIN_FILENO);
+                }
+            if(data->fdout > 2 && i==0)
+                {
+                    if(data->fdin > 2)
+                        close(data->prev->fdin);
+                    dup2(data->fdout,STDOUT_FILENO);
+                }
+            i++;
             if(data->arg)
                ft_exec_cmd(data, *env);
             exit(0);
@@ -94,7 +105,7 @@ int main(int ac,char *av[],char **envp)
         str = readline("Minish$>");
         ft_spl(str,&list);
         ft_full_data(list,&data);
-        ft_exection(data,&env);
+       ft_exection(data,&env);
     /*while (list)
         {
         printf("(%s,%i)\n",list->content,list->token);  
