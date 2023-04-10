@@ -19,6 +19,7 @@
 # include <stdlib.h>
 # include <unistd.h>
 
+
 typedef enum TokenType
 {
 	TOKEN_PIPE = 0,
@@ -68,10 +69,10 @@ typedef struct s_env
 	struct s_env	*next;
 }					t_env;
 void				ft_lstadd_back(t_list **lst, t_list *new);
-t_list				*ft_lstnew(char *content);
+t_list				*ft_lstnew(char *content, t_env *env);
 char				*ft_substr(char const *s, unsigned int start, size_t len);
 void				ft_subadd(char *str, t_list **list);
-int					ft_spl(char *str, t_list **list);
+int					ft_spl(char *str, t_list **list, t_env *env);
 int					ft_lstsize(t_list *list, int token, int cas);
 char				*ft_strjoin(char *s1, char *s2);
 char				*ft_strdup(const char *s1);
@@ -87,7 +88,12 @@ void				ft_envadd_back(t_env **lst, t_env *new);
 void				ft_full_env(t_env **data, char **envp);
 size_t				ft_strlen(const char *str);
 int					ft_strcmp(const char *s1, const char *s2);
-void				ft_exec_cmd(t_data *data, t_env *env);
+void				ft_exec_cmd(t_data *data, t_env *env, char **envp);
 void				ft_putstr(char *s, int fd);
-//int ft_counttoken(t_list *list,int token);
+char				*ft_expand_and_quote(char *str);
+char				*ft_expand_quote(char *str, t_env *env);
+void ft_exection(t_data *data,t_env **env,char **envp);
+char				*ft_itoa(int n);
+int					ft_isalpha(int c);
+int					ft_isdigit(int c);
 #endif

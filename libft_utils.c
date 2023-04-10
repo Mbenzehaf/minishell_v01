@@ -13,9 +13,10 @@
 
 int is_token(char c)
 {
-	return(c == '|' || c == '<' || c == '>' || c == '&' || c == ' ');
+	return(c == '|' || c == '<' || c == '>' || c == '&' || c == ' '||c == '\t');
 }
-int ft_spl(char *str,t_list **list)
+
+int ft_spl(char *str,t_list **list,t_env *env)
 {
 	int i;
 	int quote;
@@ -26,7 +27,7 @@ int ft_spl(char *str,t_list **list)
 	i = -1;
 	while (str[++i])
 	{
-		while (*str == ' ' && str++ )
+		while ((*str == ' '|| *str == '\t') && str++ )
 			if(!*str)
 				return (0);
 		if( str[i]=='\"' && !(quote % 2))
@@ -38,18 +39,19 @@ int ft_spl(char *str,t_list **list)
 			if(i==0)
 				while (is_token(str[i]) && str[i]==*str && i < 2)
 					i++;
-			ft_lstadd_back(list,ft_lstnew(ft_substr(str,0,i)));
+			ft_lstadd_back(list,ft_lstnew(ft_substr(str,0,i),env));
 			str=&str[i];
 			i = -1;
 		}else if(!str[i + 1]&&!(quote % 2)&&!(dquote % 2))
 		{
-			ft_lstadd_back(list,ft_lstnew(ft_substr(str,0,i + (!str[i + 1] && str[i]!=' '))));
+			ft_lstadd_back(list,ft_lstnew(ft_substr(str,0,i + (!str[i + 1] && str[i]!=' ')),env));
 			str=&str[i + (!str[i + 1])];
 			i = -1;
 		}
 	}
 	return ((quote % 2)|(dquote % 2));
 }
+
 size_t	ft_strlen(const char *str)
 {
 	int	i;
@@ -70,10 +72,10 @@ char	*ft_substr(char const *s, unsigned int start, size_t len)
 
 	i = 0;
 	if (!s)
-		return (0);
+		return (NULL);
 	slen = ft_strlen(s);
 	if (slen - 1 < start || slen == 0)
-		return ("");
+		return (NULL);
 	if (slen - (size_t) start < len)
 		len = slen -(size_t) start;
 	str = malloc(len + 1);
@@ -105,8 +107,7 @@ void	ft_putstr(char *s, int fd)
 	write(fd, s, ft_strlen(s));
 }
 
-
-t_list	*ft_lstnew(char *content)
+t_list	*ft_lstnew(char *content,t_env *env)
 {
 	t_list	*node;
 
@@ -126,7 +127,12 @@ t_list	*ft_lstnew(char *content)
 	else if(!ft_strcmp(content,">"))
 		node->token = TOKEN_OUTPUT;
 	else
-		node->token = TOKEN_WORD;
+		{
+			node->token = TOKEN_WORD;
+			content = ft_expand_quote(content,env);
+			//printf("(%s)\n",content);
+			//content = ft_expand_and_quote(content);
+		}
 	node->content = content;
 	node->next = NULL;
 	node->prev = NULL;
@@ -182,6 +188,7 @@ t_data	*ft_dtnew(char **arg,int in,int out)
 	node->fdin = in;
 	node->fdout = out;
 	node->next = NULL;
+	node->prev = NULL;
 	return (node);
 }
 
@@ -197,6 +204,7 @@ void	ft_dtadd_back(t_data **lst, t_data *new)
 		while (node->next)
 			node = node->next;
 			new->prev = node;
+
 		node->next = new;
 	}
 	else
@@ -343,4 +351,67 @@ void	ft_freedata(t_data *lst)
 		free(lst);
 		lst = node;
 	}
+}
+int	ft_isalpha(int c)
+{
+	if ((c >= 65 && c <= 90) || (c >= 97 && c <= 122))
+	{
+		return (1);
+	}
+	return (0);
+}
+int	ft_isdigit(int c)
+{
+	if (c >= '0' && c <= '9')
+	{
+		return (1);
+	}
+	return (0);
+}
+
+int	ft_nbrlen(long n)
+{
+	int	count;
+
+	count = 0;
+	if (n <= 0)
+	{
+		count++;
+		n *= (-1);
+	}
+	while (n != 0)
+	{
+		n /= 10;
+		count++;
+	}
+	return (count);
+}
+
+char	*ft_itoa(int n)
+{
+	long		r;
+	char		*str;
+	int			len;
+	int			sign;
+
+	r = n;
+	sign = 0;
+	len = ft_nbrlen(r);
+	str = malloc(len + 1);
+	if (!str)
+		return (0);
+	str[len] = 0;
+	if (r < 0)
+	{
+		str[0] = '-';
+		r *= (-1);
+		len--;
+		sign++;
+	}
+	while (len > 0)
+	{
+		str[len-- + sign - 1] = r % 10 + 48;
+		r /= 10;
+	}
+	return (str);
 }

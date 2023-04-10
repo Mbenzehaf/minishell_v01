@@ -14,7 +14,7 @@ NAME = minishell
 
 CC = cc 
 
-#CFLAGS= -Wall -Werror -Wextra 
+CFLAGS= -Wall -Werror -Wextra 
 
 SRC =  main.c ft_split.c libft_utils.c utils.c
 

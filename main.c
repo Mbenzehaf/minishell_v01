@@ -17,7 +17,6 @@
     i=0;
     while (str[i])
     {
-        
         i++;
     }
     
@@ -45,44 +44,7 @@ void ft_minishell(t_list *list)
         pipe--;
     }
 }*/
-void ft_exection(t_data *data,t_env **env)
-{
-    static int i;
-    int status;
-    while (data)
-    {
-        data->pid = fork();
-        if(data->pid == -1)
-            {
-                perror("fork");
-                exit(EXIT_FAILURE);
-            }
-        if(data->pid==0)
-        {
-           // printf("%s\n",data->arg[0]);
-          if(data->fdin > 2 && i==1)
-                {
-                    if(data->prev->fdout> 2)
-                     close(data->fdout);
-                    dup2(data->fdin,STDIN_FILENO);
-                }
-            if(data->fdout > 2 && i==0)
-                {
-                    if(data->fdin > 2)
-                        close(data->prev->fdin);
-                    dup2(data->fdout,STDOUT_FILENO);
-                }
-            i++;
-            if(data->arg)
-               ft_exec_cmd(data, *env);
-            exit(0);
-        }else{
-            waitpid(data->pid ,&status,0);
-        }
-        data = data->next;
-    }
-    //exit(WIFEXITED(status));
-}
+
 int main(int ac,char *av[],char **envp)
 {
     char *str;
@@ -90,8 +52,7 @@ int main(int ac,char *av[],char **envp)
     t_list *list;
     t_data *data;
     t_env *env;
-    
-    (void)envp;
+
     (void)av;
     (void)ac;
     env = NULL;
@@ -103,9 +64,10 @@ int main(int ac,char *av[],char **envp)
         list = NULL;
         data = NULL;
         str = readline("Minish$>");
-        ft_spl(str,&list);
+        ft_spl(str,&list,env);
         ft_full_data(list,&data);
-       ft_exection(data,&env);
+       ft_exection(data,&env,envp);
+
     /*while (list)
         {
         printf("(%s,%i)\n",list->content,list->token);  

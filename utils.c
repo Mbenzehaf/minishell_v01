@@ -10,7 +10,7 @@
 /*                                                                            */
 /* ************************************************************************** */
 #include "minishell.h"
-
+int exit_status = 0;
 /*
 int ft_lstsize(t_list *list,t_TokenType token,int cas)
 {
@@ -75,6 +75,197 @@ char **ft_create_arg(t_list *list)
     i = 0;
 	return NULL;
 }*/
+char *ft_split_join(char *str)
+{
+	int i;
+	char **ptr;
+	char *tab;
+	i = 0;
+
+	tab = NULL;
+	ptr = ft_split(str,3);
+
+	while (ptr[i])
+	{
+		tab = ft_strjoin(tab,ptr[i]);
+		i++;
+	}
+	i = 0;
+	while (ptr && ptr[i])
+			i++;
+	while(i)
+			free(ptr[--i]);
+		free(ptr);
+	return (tab);
+}
+
+char *get_expand(t_env *env,char *str)
+{
+	//printf("---->%s\n",str);
+	if(!str||!*str)
+		return("$");
+	if(!ft_strcmp(str,"?"))
+		{
+			free(str);
+			return (ft_itoa(exit_status));
+		}
+	while (env && str)
+	{
+		if(!ft_strcmp(str,env->var))
+		{
+			free(str);
+			return (env->value);
+		}
+		env = env->next;
+	}
+	free(str);
+	return (NULL);
+}
+
+char *ft_expand_quote(char *str,t_env *env)
+{
+	int i;
+	int quote;
+	int dquote;
+	char *string;
+	char *ex_str;
+	int j;
+	
+	quote = 0;
+	dquote = 0;
+	i = 0;
+	string = NULL;
+	while(str[i])
+	{
+		if( str[i]=='\"' && !(quote % 2))
+				dquote++;
+		else if( str[i]=='\'' && !(dquote % 2))
+				quote++;
+		if(str[i]=='$' && !(quote % 2) && str[i + 1 ]!='\'' &&((dquote % 2) || str[i + 1]!= '\"'))
+		{ 
+			j = 0;
+			while(str[i+(++j)])
+			{
+				 if ((str[i + 1]=='?' && str[i]=='$'))
+			{
+					j++;
+					break;
+			}
+			else if(!(ft_isalpha(str[i+j]) || ft_isdigit(str[i + j])||str[i + j]=='_'))
+						break ;
+			}
+			ex_str = get_expand(env,ft_substr(str,i + 1 ,j-1));
+			string = ft_strjoin(string , ex_str);
+			if (str[i + 1]=='?')
+				free(ex_str);
+
+			//leaks in $?
+			i = i + j - 1;
+		}else if((str[i]=='\"' && (quote % 2))||(str[i]=='\'' && (dquote % 2))||(str[i]!='\"' && str[i]!='\'' && (str[i]!='$'||(quote % 2))))
+			string =ft_strjoin(string,(char[]){str[i],0});
+		i++;
+	}
+	free(str);
+	//printf("----->%s\n",string);
+	return(string);
+}
+
+void ft_exection(t_data *data,t_env **env,char **envp)
+{
+    int status;
+    t_data *temp;
+    temp = data;
+    while (data)
+    {
+        data->pid = fork();
+        if(data->pid == -1)
+            {
+                perror("fork");
+                exit(EXIT_FAILURE);
+            }
+        if(data->pid==0)
+        {
+            if(data->fdin==-1||data->fdout==-1)
+                exit(1);
+          if(data->fdin > 2 )
+                {
+                   if(data->prev && data->prev->fdout > 2)
+                        close(data->prev->fdout);
+                    dup2(data->fdin,STDIN_FILENO);
+                }
+            if(data->fdout > 2)
+                {
+                    if(data->fdin > 2)
+                        close(data->fdin);
+                    dup2(data->fdout,STDOUT_FILENO);
+                }
+           // if(data->arg)
+               ft_exec_cmd(data, *env,envp);
+            //exit(1);
+        }else{
+         if(data->fdin > 2)
+                close(data->fdin);
+       if(data->fdout > 2)
+                close(data->fdout);
+         waitpid(data->pid,&status,0);
+        }
+        data = data->next;
+    }
+    /*while(temp)
+    {
+       if(temp->fdin > 2)
+                close(temp->fdin);
+       if(temp->fdout > 2)
+                close(temp->fdout);
+         waitpid(temp->pid,&status,0);
+        temp = temp->next;
+    }*/
+   //wait(0);
+    //waitpid(data->pid ,&status,0);
+    exit_status=WIFEXITED(status);
+
+}
+/*
+char *ft_expand_and_quote(char *str)
+{
+	int i;
+	int quote;
+	int dquote;
+	char **ptr;
+	char *string;
+	int is_edit;
+
+	quote = 0;
+	dquote = 0;
+	is_edit = 0;
+	i = 0;
+	while (str[i])
+	{
+		if( str[i]=='\"' && !(quote % 2))
+			{
+				str[i] = 3;
+				dquote++;
+				is_edit = 1;
+			}
+		else if( str[i]=='\'' && !(dquote % 2))
+			{
+				str[i] = 3;
+				quote++;
+				is_edit = 1;
+			}
+		if(str[i]=='$')
+		{
+			
+			is_edit = 1;
+		}
+		i++;
+	}
+	if(is_edit)
+		return (ft_split_join(str));
+	else
+		return (str);
+}
+*/
 
 void ft_full_data(t_list *list,t_data **data)
 {
@@ -92,10 +283,12 @@ void ft_full_data(t_list *list,t_data **data)
 	h_doc = NULL;
 	if(!list)
 		return ;
+		
 	while (list)
 	{
 		if (list->token == TOKEN_WORD)
 		{
+			
 			str = ft_strjoin(str,(char[]){3,0});
 			str = ft_strjoin(str,list->content);
 			//str = ft_strjoin(ft_strjoin(str,(char[]){3,0}),list->content);
@@ -103,12 +296,22 @@ void ft_full_data(t_list *list,t_data **data)
 		else if(list->token == FILE_IN)
 		{
 			fdin = open(list->content,O_RDONLY);
+			if(fdin==-1)
+				perror(list->content);
 		}else if (list->token == FILE_OUT)
 		{
 			fdout = open(list->content,O_CREAT|O_WRONLY|O_TRUNC,0644);
+			if(fdout==-1)
+			{
+				perror(list->content);
+			}
 		}else if (list->token == FILE_APP)
 		{
 			fdout = open(list->content,O_CREAT|O_WRONLY|O_APPEND,0644);
+			if(fdout==-1)
+			{
+				perror(list->content);
+			}
 		}else if (list->token == TOKEN_HEREDOC)
 		{
 			//fd = malloc(sizeof(int)*2);
@@ -137,7 +340,7 @@ void ft_full_data(t_list *list,t_data **data)
 					{
 					if (pipe(fd))
 						(perror("pipe"), exit(1));
-					fdout=fd[1];
+					fdout = fd[1];
 					is_pipe = 1;
 					}
 				}
@@ -251,7 +454,6 @@ void	ft_msg_cmd_error(char *cmd)
 {
 	ft_putstr_fd(cmd, 2);
 	ft_putstr_fd(": Command not found\n", 2);
-	
 }
 
 char	*ft_envchr(char **envp, char *str)
@@ -323,15 +525,18 @@ char **ft_path_envp(t_env *envp)
 	return (path);
 }
 
-void ft_exec_cmd(t_data *data,t_env *env)
+void ft_exec_cmd(t_data *data,t_env *env,char **envp)
 {
 	int i;
 	char *path;
 
 	i = 0;
-	if(!data->arg)
-		exit(0);
-	if(execve(data->arg[0], data->arg, NULL) < 0)
+	if(!data->arg||!*data->arg)
+		{
+			ft_msg_cmd_error(data->arg[0]);
+			exit(0);
+		}
+	if(execve(data->arg[0], data->arg, envp) < 0)
 	{
 		data->path=ft_path_envp(env);
 		if (!data->path)
@@ -342,7 +547,7 @@ void ft_exec_cmd(t_data *data,t_env *env)
 		while (data->path[i])
 			{
 				path = ft_strjoin(ft_strdup(data->path[i++]), data->arg[0]);
-				execve(path, data->arg, NULL);
+				execve(path, data->arg, envp);
 				free(path);
 			}
 			ft_msg_cmd_error(data->arg[0]);
