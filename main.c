@@ -44,7 +44,10 @@ void ft_minishell(t_list *list)
         pipe--;
     }
 }*/
-
+void sigint_handler(int signal) {
+    (void)signal;
+    return ;
+}
 int main(int ac,char *av[],char **envp)
 {
     char *str;
@@ -57,18 +60,32 @@ int main(int ac,char *av[],char **envp)
     (void)ac;
     env = NULL;
     ft_full_env(&env,envp);
-
+    /*if (signal(SIGINT, sigint_handler) == SIG_ERR) {
+        perror("signal");
+        exit(1);
+    }*/
+    
     while(1)
     {
         i=0;
         list = NULL;
         data = NULL;
         str = readline("Minish$>");
+        if(str)
+        {
         ft_spl(str,&list,env);
-        ft_full_data(list,&data);
-       ft_exection(data,&env,envp);
-
-    /*while (list)
+        ft_full_data(list,list,&data);
+        ft_exection(data,&env,envp);
+        add_history(str);
+        ft_freelist(list);
+        ft_freedata(data);
+        free(str);
+        }
+    
+   }
+   //rl_clear_history(); 
+}
+ /*while (list)
         {
         printf("(%s,%i)\n",list->content,list->token);  
             list = list->next;
@@ -84,12 +101,3 @@ int main(int ac,char *av[],char **envp)
              printf(")\n");
             data = data->next;
         }*/
-        add_history(str);
-        ft_freelist(list);
-       ft_freedata(data);
-       // system("leaks minishell");
-        if(str)
-            free(str);
-       
-   }
-}

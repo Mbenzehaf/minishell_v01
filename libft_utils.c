@@ -95,6 +95,7 @@ int	ft_strcmp(const char *s1, const char *s2)
 	size_t	i;
 
 	i = 0;
+	
 	while (s1[i] == s2[i] && s1[i] && s2[i])
 		i++;
 	return ((unsigned char)s1[i] - (unsigned char)s2[i]);
@@ -177,7 +178,7 @@ void	ft_lstadd_back(t_list **lst, t_list *new)
 		*(lst) = new;
 }
 
-t_data	*ft_dtnew(char **arg,int in,int out)
+t_data	*ft_dtnew(char **arg,int in,int n_fdout)
 {
 	t_data	*node;
 
@@ -186,7 +187,9 @@ t_data	*ft_dtnew(char **arg,int in,int out)
 		return (NULL);
 	node->arg = arg;
 	node->fdin = in;
-	node->fdout = out;
+	node->fdout = -2;
+	node->n_fdout = n_fdout;
+	node->fd = NULL;
 	node->next = NULL;
 	node->prev = NULL;
 	return (node);
@@ -348,6 +351,7 @@ void	ft_freedata(t_data *lst)
 			free(lst->arg[--i]);
 		free(lst->arg);
 		lst->arg = NULL;
+		free(lst->fd);
 		free(lst);
 		lst = node;
 	}

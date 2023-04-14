@@ -18,7 +18,7 @@
 # include <stdio.h>
 # include <stdlib.h>
 # include <unistd.h>
-
+#include <signal.h>
 
 typedef enum TokenType
 {
@@ -37,9 +37,11 @@ typedef enum TokenType
 
 typedef struct s_data
 {
+	int				n_fdout;
 	char			**path;
 	int				fdout;
 	int				fdin;
+	int				*fd;
 	char			**arg;
 	struct s_data	*next;
 	struct s_data	*prev;
@@ -68,6 +70,7 @@ typedef struct s_env
 	char			*value;
 	struct s_env	*next;
 }					t_env;
+
 void				ft_lstadd_back(t_list **lst, t_list *new);
 t_list				*ft_lstnew(char *content, t_env *env);
 char				*ft_substr(char const *s, unsigned int start, size_t len);
@@ -76,10 +79,12 @@ int					ft_spl(char *str, t_list **list, t_env *env);
 int					ft_lstsize(t_list *list, int token, int cas);
 char				*ft_strjoin(char *s1, char *s2);
 char				*ft_strdup(const char *s1);
-t_data				*ft_dtnew(char **arg, int in, int out);
+//t_data				*ft_dtnew(char **arg, int in, int out);
+t_data				*ft_dtnew(char **arg,int in,int n_fdout);
 void				ft_dtadd_back(t_data **lst, t_data *new);
 char				**ft_split(char const *s, char c);
-void				ft_full_data(t_list *list, t_data **data);
+void				ft_full_data(t_list *list,t_list *temp, t_data **data);
+void				ft_fdout(t_list *list,t_data *data);
 void				ft_freelist(t_list *lst);
 void				ft_freedata(t_data *lst);
 char				**ft_path_envp(t_env *envp);
@@ -92,7 +97,7 @@ void				ft_exec_cmd(t_data *data, t_env *env, char **envp);
 void				ft_putstr(char *s, int fd);
 char				*ft_expand_and_quote(char *str);
 char				*ft_expand_quote(char *str, t_env *env);
-void ft_exection(t_data *data,t_env **env,char **envp);
+void				ft_exection(t_data *data, t_env **env, char **envp);
 char				*ft_itoa(int n);
 int					ft_isalpha(int c);
 int					ft_isdigit(int c);
