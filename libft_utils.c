@@ -39,12 +39,12 @@ int ft_spl(char *str,t_list **list,t_env *env)
 			if(i==0)
 				while (is_token(str[i]) && str[i]==*str && i < 2)
 					i++;
-			ft_lstadd_back(list,ft_lstnew(ft_substr(str,0,i),env));
+			ft_lstadd_back(list,ft_lstnew(ft_substr(str,0,i)),env);
 			str=&str[i];
 			i = -1;
 		}else if(!str[i + 1]&&!(quote % 2)&&!(dquote % 2))
 		{
-			ft_lstadd_back(list,ft_lstnew(ft_substr(str,0,i + (!str[i + 1] && str[i]!=' ')),env));
+			ft_lstadd_back(list,ft_lstnew(ft_substr(str,0,i + (!str[i + 1] && str[i]!=' '))),env);
 			str=&str[i + (!str[i + 1])];
 			i = -1;
 		}
@@ -95,7 +95,8 @@ int	ft_strcmp(const char *s1, const char *s2)
 	size_t	i;
 
 	i = 0;
-	
+	if(!s1||!s2)
+		return 1;
 	while (s1[i] == s2[i] && s1[i] && s2[i])
 		i++;
 	return ((unsigned char)s1[i] - (unsigned char)s2[i]);
@@ -108,7 +109,7 @@ void	ft_putstr(char *s, int fd)
 	write(fd, s, ft_strlen(s));
 }
 
-t_list	*ft_lstnew(char *content,t_env *env)
+t_list	*ft_lstnew(char *content)
 {
 	t_list	*node;
 
@@ -128,19 +129,14 @@ t_list	*ft_lstnew(char *content,t_env *env)
 	else if(!ft_strcmp(content,">"))
 		node->token = TOKEN_OUTPUT;
 	else
-		{
-			node->token = TOKEN_WORD;
-			content = ft_expand_quote(content,env);
-			//printf("(%s)\n",content);
-			//content = ft_expand_and_quote(content);
-		}
+		node->token = TOKEN_WORD;
 	node->content = content;
 	node->next = NULL;
 	node->prev = NULL;
 	return (node);
 }
 
-void	ft_lstadd_back(t_list **lst, t_list *new)
+void	ft_lstadd_back(t_list **lst, t_list *new ,t_env *env)
 {
 	t_list	*node;
 
@@ -172,13 +168,20 @@ void	ft_lstadd_back(t_list **lst, t_list *new)
 				new->token = FILE_OUT;
 			else if(node->token == TOKEN_HEREDOC)
 				new->token = WORD_LIM;
+			if(node->token != TOKEN_HEREDOC)
+				new->content = ft_expand_quote(new->content,env,1,0);
+			else
+				new->content = ft_expand_quote(new->content,env,1,1);
 		}
 	}
 	else
-		*(lst) = new;
+		{
+			new->content = ft_expand_quote(new->content,env,1,0);
+			*(lst) = new;
+		}
 }
 
-t_data	*ft_dtnew(char **arg,int in,int n_fdout)
+t_data	*ft_dtnew(char **arg,int in,int out)
 {
 	t_data	*node;
 
@@ -187,8 +190,7 @@ t_data	*ft_dtnew(char **arg,int in,int n_fdout)
 		return (NULL);
 	node->arg = arg;
 	node->fdin = in;
-	node->fdout = -2;
-	node->n_fdout = n_fdout;
+	node->fdout = out;
 	node->fd = NULL;
 	node->next = NULL;
 	node->prev = NULL;
@@ -218,7 +220,7 @@ t_env	*ft_envnew(char *var,char *value)
 {
 	t_env	*node;
 
-	node = malloc(sizeof(t_data));
+	node = malloc(sizeof(t_env));
 	if (!node)
 		return (NULL);
 	node->value = value;
@@ -230,6 +232,35 @@ t_env	*ft_envnew(char *var,char *value)
 void	ft_envadd_back(t_env **lst, t_env *new)
 {
 	t_env	*node;
+
+	node = *(lst);
+	if (!new)
+		return ;
+	if (*(lst))
+	{
+		while (node->next)
+			node = node->next;
+		node->next = new;
+	}
+	else
+		*(lst) = new;
+}
+
+t_heredoc	*ft_hdocnew(int fd)
+{
+	t_heredoc	*node;
+
+	node = malloc(sizeof(t_heredoc));
+	if (!node)
+		return (NULL);
+	node->fd = fd;
+	node->next = NULL;
+	return (node);
+}
+
+void	ft_hdocadd_back(t_heredoc **lst, t_heredoc *new)
+{
+	t_heredoc	*node;
 
 	node = *(lst);
 	if (!new)

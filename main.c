@@ -11,47 +11,19 @@
 /* ************************************************************************** */
 #include "minishell.h"
 
-/*void ft_fill(t_list *list,char **str)
+void    sig_handler(int sig)
 {
-    int i;
-    i=0;
-    while (str[i])
+    if (sig == SIGINT)
     {
-        i++;
+       ft_putstr("\n",1);
+        rl_on_new_line();
+        rl_replace_line("", sig);
+        rl_redisplay();
     }
-    
-}*/
-/*
-void ft_minishell(t_list *list)
-{
-    int pipe;
-    int fd[2];
-    
-
-    pipe = ft_counttoken(list,TOKEN_PIPE) + 1;
-
-    while (pipe)
-    {
-        int pid =fork();
-        if(pid == -1)
-        {
-            exit(1);
-        }
-        if(pid == 0)
-        {
-
-        }
-        pipe--;
-    }
-}*/
-void sigint_handler(int signal) {
-    (void)signal;
-    return ;
 }
 int main(int ac,char *av[],char **envp)
 {
     char *str;
-    int i;
     t_list *list;
     t_data *data;
     t_env *env;
@@ -60,44 +32,30 @@ int main(int ac,char *av[],char **envp)
     (void)ac;
     env = NULL;
     ft_full_env(&env,envp);
-    /*if (signal(SIGINT, sigint_handler) == SIG_ERR) {
+   if (signal(SIGINT, sig_handler) == SIG_ERR) {
         perror("signal");
         exit(1);
-    }*/
-    
+    }
+   
     while(1)
     {
-        i=0;
         list = NULL;
         data = NULL;
-        str = readline("Minish$>");
+        str = readline("\x1b[1;36mMinish$>\x1b[1;0m \x1b[1;38m");
+        ft_putstr("\x1b[0;0m",1);
         if(str)
         {
         ft_spl(str,&list,env);
-        ft_full_data(list,list,&data);
+        ft_full_data(list,&data,env);
         ft_exection(data,&env,envp);
         add_history(str);
         ft_freelist(list);
         ft_freedata(data);
         free(str);
+        }else
+        {
+            ft_putstr("exit\n",1);
+            break;
         }
-    
    }
-   //rl_clear_history(); 
 }
- /*while (list)
-        {
-        printf("(%s,%i)\n",list->content,list->token);  
-            list = list->next;
-        }*/
-    /*while (data) 
-        {
-            i = 0;
-            while (data->arg[i])
-            {
-                printf("(%s,",data->arg[i]);
-                i++;
-            }
-             printf(")\n");
-            data = data->next;
-        }*/

@@ -12,6 +12,7 @@
 #include <sys/wait.h>
 #include <signal.h>
 
+
 void sigint_handler(int signal) {
    // printf("Caught SIGINT signal, exiting...\n");
     //exit(1);

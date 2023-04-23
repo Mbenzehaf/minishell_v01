@@ -14,18 +14,20 @@ NAME = minishell
 
 CC = cc 
 
-CFLAGS= -Wall -Werror -Wextra 
+##CFLAGS= -Wall -Werror -Wextra 
 
 SRC =  main.c ft_split.c libft_utils.c utils.c
 
+INCLUDE = -L/goinfre/mben-zeh/homebrew/opt/readline/lib -I/goinfre/mben-zeh/homebrew/opt/readline/include
+
 OBJ = ${SRC:.c=.o}
 
-all : ${NAME}
+all : ${NAME} 
 
 ${NAME} : ${OBJ}
-	@$(CC)  $(OBJ) -o ${NAME} -lreadline 
-#-fsanitize=address
+	@$(CC)  $(OBJ) $(INCLUDE) -o ${NAME} -lreadline 
 
+#-lreadline -fsanitize=address
 clean :
 	rm -f ${OBJ} 
 
