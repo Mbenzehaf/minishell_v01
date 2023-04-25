@@ -18,7 +18,7 @@ CC = cc
 
 SRC =  main.c ft_split.c libft_utils.c utils.c
 
-INCLUDE = -L/goinfre/mben-zeh/homebrew/opt/readline/lib -I/goinfre/mben-zeh/homebrew/opt/readline/include
+#INCLUDE = -L/goinfre/mben-zeh/homebrew/opt/readline/lib -I/goinfre/mben-zeh/homebrew/opt/readline/include
 
 OBJ = ${SRC:.c=.o}
 

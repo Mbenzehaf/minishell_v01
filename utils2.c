@@ -60,9 +60,15 @@ void ft_export(t_env *env, char **str)
 
 void ft_unset(t_env *env, char *str)
 {
-    while (env && ft_strcmp(env->var,str))
+    t_env *node;
+
+    while (env)
     {
-        
+        if(env->next && !ft_strcmp(env->next->var,str))
+        {
+            
+            break ;
+        }
         env = env->next;
     }
     

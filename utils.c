@@ -188,6 +188,7 @@ void ft_exection(t_data *data,t_env **env,char **envp)
                     close(data->fd[0]);
                     dup2(data->fd[1],STDOUT_FILENO);
 				}
+			ft_
             ft_exec_cmd(data, *env,envp);
             exit(0);
         }else{
@@ -255,10 +256,10 @@ void    ssig_handler(int sig)
 {
     if (sig == SIGINT)
     {
-       ft_putstr("\n",1);
+      /* ft_putstr("\n",1);
         rl_on_new_line();
         rl_replace_line("", sig);
-        rl_redisplay();
+        rl_redisplay();*/
     }
 }
 
@@ -288,7 +289,7 @@ void ft_full_heredoc(t_heredoc **heredoc,t_list *list,t_env *env)
 				if(!h_doc || !ft_strcmp(h_doc,list->next->content))
 					{
 						free(h_doc);
-						exit;
+						break;
 					}
 				//h_doc = ft_expand_quote(h_doc,env,0,0);
 				h_doc = ft_strjoin(h_doc,"\n");

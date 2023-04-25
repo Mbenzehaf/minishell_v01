@@ -106,6 +106,6 @@ void					ft_hdocadd_back(t_heredoc **lst, t_heredoc *new);
 char					*ft_itoa(int n);
 int						ft_isalpha(int c);
 int						ft_isdigit(int c);
-void					rl_replace_line(char *,int);
+//void					rl_replace_line(char *,int);
 void					sig_handler(int sig);
 #endif

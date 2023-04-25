@@ -15,10 +15,10 @@ void    sig_handler(int sig)
 {
     if (sig == SIGINT)
     {
-       ft_putstr("\n",1);
+       /*ft_putstr("\n",1);
         rl_on_new_line();
         rl_replace_line("", sig);
-        rl_redisplay();
+        rl_redisplay();*/
     }
 }
 int main(int ac,char *av[],char **envp)
@@ -32,10 +32,10 @@ int main(int ac,char *av[],char **envp)
     (void)ac;
     env = NULL;
     ft_full_env(&env,envp);
-   if (signal(SIGINT, sig_handler) == SIG_ERR) {
+  /* if (signal(SIGINT, sig_handler) == SIG_ERR) {
         perror("signal");
         exit(1);
-    }
+    }*/
    
     while(1)
     {
