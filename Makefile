@@ -16,9 +16,9 @@ CC = cc
 
 ##CFLAGS= -Wall -Werror -Wextra 
 
-SRC =  main.c ft_split.c libft_utils.c utils.c
+SRC =  main.c ft_split.c libft_utils.c utils.c utils2.c
 
-#INCLUDE = -L/goinfre/mben-zeh/homebrew/opt/readline/lib -I/goinfre/mben-zeh/homebrew/opt/readline/include
+INCLUDE = -L/goinfre/mben-zeh/homebrew/opt/readline/lib -I/goinfre/mben-zeh/homebrew/opt/readline/include
 
 OBJ = ${SRC:.c=.o}
 
@@ -26,7 +26,7 @@ all : ${NAME}
 
 ${NAME} : ${OBJ}
 	@$(CC)  $(OBJ) $(INCLUDE) -o ${NAME} -lreadline 
-
+#-fsanitize=address
 #-lreadline -fsanitize=address
 clean :
 	rm -f ${OBJ} 

@@ -15,7 +15,6 @@
 # include <readline/history.h>
 # include <readline/readline.h>
 # include <signal.h>
-
 # include <stdio.h>
 # include <stdlib.h>
 # include <unistd.h>
@@ -37,8 +36,6 @@ typedef enum TokenType
 
 typedef struct s_data
 {
-	int					n_fdout;
-	int					n_fdin;
 	char				**path;
 	int					fdout;
 	int					fdin;
@@ -47,8 +44,6 @@ typedef struct s_data
 	struct s_data		*next;
 	struct s_data		*prev;
 	pid_t				pid;
-	int					is_pipein;
-	int					is_pipeout;
 }						t_data;
 
 typedef struct s_list
@@ -96,16 +91,19 @@ void					ft_envadd_back(t_env **lst, t_env *new);
 void					ft_full_env(t_env **data, char **envp);
 size_t					ft_strlen(const char *str);
 int						ft_strcmp(const char *s1, const char *s2);
-void					ft_exec_cmd(t_data *data, t_env *env, char **envp);
+void					ft_exec_cmd(t_data *data, t_env *env);
 void					ft_putstr(char *s, int fd);
 char					*ft_expand_and_quote(char *str);
 char *ft_expand_quote(char *str,t_env *env,int isheredoc, int is_lim);
-void					ft_exection(t_data *data, t_env **env, char **envp);
+void ft_exection(t_data *data,t_env **env);
 t_heredoc				*ft_hdocnew(int fd);
 void					ft_hdocadd_back(t_heredoc **lst, t_heredoc *new);
 char					*ft_itoa(int n);
 int						ft_isalpha(int c);
 int						ft_isdigit(int c);
-//void					rl_replace_line(char *,int);
+void					rl_replace_line(char *,int);
 void					sig_handler(int sig);
+void ft_echo(char **str);
+void ft_env(t_env *env,int is_export);
+
 #endif

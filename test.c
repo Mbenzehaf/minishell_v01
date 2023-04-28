@@ -17,6 +17,7 @@ void sigint_handler(int signal) {
    // printf("Caught SIGINT signal, exiting...\n");
     //exit(1);
     printf("\n");
+    exit(1);
 }
 void sigquit_handler(int signal) {
    // printf("Caught SIGQUIT signal, exiting...\n");
@@ -37,6 +38,13 @@ int main() {
     while (1)
     {
         str=readline(">");
+        int fd = fork();
+        if(fd == 0)
+            {
+                system("leaks a.out");
+                exit(0);
+            }
+        wait(0);
         printf("%s\n",str);
         free(str);
     }

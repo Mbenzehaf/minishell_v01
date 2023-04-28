@@ -11,70 +11,6 @@
 /* ************************************************************************** */
 
 #include "minishell.h"
-/*
-int ft_lstsize(t_list *list,t_TokenType token,int cas)
-{
-    int i;
-
-    i = 0;
-	if(cas == 0)
-	{
-	while (list)
-        i++;
-        list  = list->next;
-	}else if (cas==1)
-	{
- 	while (list && list->token == token)
-    	{
-        i++;
-        list  = list->next;
-    }
-	}else 
-	{
-		while (list )
-    	{
-		if(list->token==token)
-        	i++;
-        list  = list->next;
-		}
-	}
-   
-    return(i);
-}
-
-void ft_strjoincmd(t_data **data,t_list* list)
-{
-    while (list)
-    {
-        list = list->next;
-    }
-}
-
-int ft_counttoken(t_list *list,int token)
-{
-    int i;
-
-    i = 0;
-    while (list)
-    {
-        if(list->token == token)
-            i++;
-        list  = list->next;
-    }
-    return(i);
-}
-char **ft_create_arg(t_list *list)
-{
-    t_list *temp;
-    int i;
-    int size;
-	char **arg;
-
-	size = ft_counttoken(list,TOKEN_WORD);
-	arg = malloc(sizeof(char *));
-    i = 0;
-	return NULL;
-}*/
 
 char *get_expand(t_env *env,char *str,int dquote)
 {
@@ -147,11 +83,101 @@ char *ft_expand_quote(char *str,t_env *env,int isheredoc,int is_lim)
 	return(string);
 }
 
-void ft_exection(t_data *data,t_env **env,char **envp)
+int ft_builtins(t_data *data,t_env *env,int x)
+{
+	char *str;
+	str = NULL;
+	if(!ft_strcmp("echo",data->arg[0]))
+	{
+		ft_echo(&data->arg[1]);
+		return (1);
+	}else if (!ft_strcmp("pwd",data->arg[0]))
+	{
+		ft_putstr(getcwd(NULL,0),1);
+		ft_putstr("\n",1);
+		return(1);
+	}else if (!ft_strcmp("env",data->arg[0]) && !data->arg[1])
+	{	
+		ft_env(env,0);
+		return(1);
+	}else if (!ft_strcmp("export",data->arg[0]))
+	{
+		if(!data->arg[1])
+			ft_env(env,1);
+		else
+			;
+		return(1);
+		
+	}else if(!ft_strcmp("cd",data->arg[0]))
+	{
+
+	}
+	return (0);
+}
+
+int builtins(char **str)
+{
+	return (0);
+}
+int size_env(t_env *env)
+{
+	int i;
+
+	i = 0;
+	while (env)
+	{
+		if(env->value)
+			i++;
+		env = env->next;
+	}
+	return (i);
+}
+
+char **ft_env_tab(t_env *env)
+{
+	char **ptr;
+	int i;
+	int len;
+
+	i = 0;
+	len = size_env(env);
+	ptr = malloc(sizeof(char *) * (len + 1));
+	while (i < len)
+	{
+		if(env->value)
+		{
+			ptr[i] = ft_strjoin(ft_strdup(env->var),"=");
+			ptr[i] = ft_strjoin(ptr[i],env->value);
+			i++;
+		}
+		env = env->next;
+	}
+	ptr[i] = NULL;
+	return (ptr);
+	
+}
+
+void ft_wait_close(t_data *data)
+{
+	int status;
+	while(data)
+    {
+		if(data->fdin > 2)
+                close(data->fdin);
+       if(data->fdout > 2)
+                close(data->fdout);
+         waitpid(data->pid,&status,0);
+        data = data->next;
+	}
+    exit_status = WEXITSTATUS(status);
+}
+
+void ft_exection(t_data *data,t_env **env)
 {
     int status;
     t_data *temp;
     temp = data;
+	
 	
 	if(data &&data->arg && *data->arg && !ft_strcmp(data->arg[0],"exit"))
 		(ft_putstr("exit\n",1),exit(0));
@@ -160,11 +186,17 @@ void ft_exection(t_data *data,t_env **env,char **envp)
 		if(data->next)
 		{
 			data->fd=malloc(2*sizeof(int));
-				pipe(data->fd);
-		}
+			pipe(data->fd);
+		}else
+			{
+				if(!data->prev && ft_builtins(data,*env,1))
+				{
+
+				}
+			}
         data->pid = fork();
         if(data->pid == -1)
-                (perror("fork"), exit(EXIT_FAILURE));
+            (perror("fork"), exit(EXIT_FAILURE));
         if(data->pid==0)
         {
             if(data->fdin==-1||data->fdout==-1)
@@ -188,8 +220,10 @@ void ft_exection(t_data *data,t_env **env,char **envp)
                     close(data->fd[0]);
                     dup2(data->fd[1],STDOUT_FILENO);
 				}
-			ft_
-            ft_exec_cmd(data, *env,envp);
+			
+			if(!ft_builtins(data,*env,0))
+            	ft_exec_cmd(data, *env);
+			//system("leaks minishell");
             exit(0);
         }else{
 			if(data->prev)
@@ -256,10 +290,10 @@ void    ssig_handler(int sig)
 {
     if (sig == SIGINT)
     {
-      /* ft_putstr("\n",1);
+       ft_putstr("\n",1);
         rl_on_new_line();
         rl_replace_line("", sig);
-        rl_redisplay();*/
+        rl_redisplay();
     }
 }
 
@@ -291,7 +325,7 @@ void ft_full_heredoc(t_heredoc **heredoc,t_list *list,t_env *env)
 						free(h_doc);
 						break;
 					}
-				//h_doc = ft_expand_quote(h_doc,env,0,0);
+				h_doc = ft_expand_quote(h_doc,env,0,0);
 				h_doc = ft_strjoin(h_doc,"\n");
 				(ft_putstr(h_doc, fd[1]), free(h_doc));
 			}
@@ -332,7 +366,7 @@ void ft_full_heredocc(t_heredoc **heredoc,t_list *list,t_env *env)
 						free(h_doc);
 						break;
 					}
-				//h_doc = ft_expand_quote(h_doc,env,0,0);
+				h_doc = ft_expand_quote(h_doc,env,0,0);
 				h_doc = ft_strjoin(h_doc,"\n");
 				(ft_putstr(h_doc, fd[1]), free(h_doc));
 			}
@@ -594,10 +628,11 @@ char **ft_path_envp(t_env *envp)
 	return (path);
 }
 
-void ft_exec_cmd(t_data *data,t_env *env,char **envp)
+void ft_exec_cmd(t_data *data,t_env *env)
 {
 	int i;
 	char *path;
+	char **envp;
 
 	i = 0;
 	if(!data->arg||!*data->arg)
@@ -607,8 +642,9 @@ void ft_exec_cmd(t_data *data,t_env *env,char **envp)
 			exit(127);
 		}
 		if(data->arg && !ft_strcmp(data->arg[0],"exit"))
-			return ; 
-	if(execve(data->arg[0], data->arg, envp) < 0)
+			return ;
+		envp = ft_env_tab(env);
+	if(execve(data->arg[0], data->arg,envp) < 0)
 	{
 		data->path=ft_path_envp(env);
 		if (!data->path)
@@ -650,6 +686,7 @@ void ft_full_env(t_env **data,char **envp)
 			j++;
 		}
 		env = ft_split(envp[i],3);
+		envp[i][j]='=';
 		ft_envadd_back(data,ft_envnew(env[0],env[1]));
 		free(env);
 		i++;
