@@ -81,7 +81,6 @@ t_data					*ft_dtnew(char **arg, int in, int out);
 void					ft_dtadd_back(t_data **lst, t_data *new);
 char					**ft_split(char const *s, char c);
 //void				ft_full_data(t_list *list,t_list *temp, t_data **data);
-void ft_full_data(t_list *list,t_data **data,t_env *env);
 void					ft_fdout(t_list *list, t_data *data);
 void					ft_freelist(t_list *lst);
 void					ft_freedata(t_data *lst);
@@ -103,7 +102,13 @@ int						ft_isalpha(int c);
 int						ft_isdigit(int c);
 void					rl_replace_line(char *,int);
 void					sig_handler(int sig);
-void ft_echo(char **str);
-void ft_env(t_env *env,int is_export);
+void					ft_echo(char **str);
+void					ft_env(t_env *env,int is_export);
+void					ft_export(t_env **env, char **str);
+void					ft_unset(t_env *env, char *str);
+char					*ft_search_env(t_env *env,char *str);
+int						ft_search_inset(t_env *env,char **str,int equal,int add);
+int						ft_check_error(t_list *list);
+int ft_full_data(t_list *list,t_data **data,t_env *env);
 
 #endif

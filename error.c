@@ -11,12 +11,10 @@
 /* ************************************************************************** */
 #include "minishell.h"
 
-int	ft_check(t_list *list)
+int	ft_check_error(t_list *list)
 {
-	while (list)
-	{
 		if (list->token == TOKEN_PIPE && (!list->next || !list->prev))
-            return (ft_putstr("syntax error near unexpected token `|'",2), 1);
+            return (ft_putstr("syntax error near unexpected token `|'\n",2), 1);
 		else if (list->token == TOKEN_INPUT || list->token == TOKEN_APPEND
 				|| list->token == TOKEN_OUTPUT || list->token == TOKEN_HEREDOC)
 		{
@@ -26,20 +24,20 @@ int	ft_check(t_list *list)
 					&& list->next->token != FILE_OUT
 					&& list->next->token != FILE_APP
 					&& list->next->token != WORD_LIM)
-					return (ft_putstr("syntax error near unexpected token `",
-							2), ft_putstr(list->next->content, 2),
+					return (ft_putstr("syntax error near unexpected token `\n",
+							2),ft_putstr(list->next->content, 2),
 						ft_putstr("'", 2), exit_status = 258, 1);
 			}
 			else
-				return (ft_putstr("syntax error near unexpected token `newline'",
-						2), (0));
+				return (ft_putstr("syntax error near unexpected token `newline'\n",
+						2), (1));
 		}
-		list = list->next;
-	}
 	return (0);
 }
+
 int	ft_check_pipe(t_list *list)
 {
+	return (0);
 }
 int	ft_check_redir(t_list *list)
 {

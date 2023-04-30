@@ -26,7 +26,7 @@ char *get_expand(t_env *env,char *str,int dquote)
 		if(!ft_strcmp(str,env->var))
 		{
 			free(str);
-			return (env->value);
+			return (ft_strdup(env->value));
 		}
 		env = env->next;
 	}
@@ -45,6 +45,7 @@ char *ft_expand_quote(char *str,t_env *env,int isheredoc,int is_lim)
 	char *string;
 	char *ex_str;
 	int j;
+	int k;
 	
 	quote = 0;
 	dquote = 0;
@@ -70,8 +71,19 @@ char *ft_expand_quote(char *str,t_env *env,int isheredoc,int is_lim)
 						break ;
 			}
 			ex_str = get_expand(env,ft_substr(str,i + 1 ,j-1),dquote * isheredoc);
+			if((dquote % 2 == 0))
+			{
+				//printf("ok\n");
+				k = 0;
+				while(ex_str[k])
+				{
+					if(ex_str[k]==' '||ex_str[k]=='\t')
+						ex_str[k] = 3;
+					k++;
+				}
+			}
 			string = ft_strjoin(string , ex_str);
-			if (str[i + 1]=='?')
+			if (ex_str && (str[i + 1]=='?' || ex_str[0] != 127))
 				free(ex_str);
 			//leaks in $?
 			i = i + j - 1;
@@ -83,34 +95,90 @@ char *ft_expand_quote(char *str,t_env *env,int isheredoc,int is_lim)
 	return(string);
 }
 
-int ft_builtins(t_data *data,t_env *env,int x)
+char *ft_getpwd(t_env *env)
+{
+	while (env)
+	{
+		if(!ft_strcmp(env->var,"PWD"))
+			return (env->value);
+		env = env->next;
+	}
+	return (NULL);
+}
+int ft_builtins(t_data *data,t_env **env,int x)
 {
 	char *str;
 	str = NULL;
-	if(!ft_strcmp("echo",data->arg[0]))
+	int n;
+
+	n = 0 ;
+	if(!data->arg)
+		return(0);
+	if(!ft_strcmp("echo",data->arg[0]) && x == 0)
 	{
 		ft_echo(&data->arg[1]);
 		return (1);
-	}else if (!ft_strcmp("pwd",data->arg[0]))
+	}else if (!ft_strcmp("pwd",data->arg[0]) && x == 0)
 	{
-		ft_putstr(getcwd(NULL,0),1);
+		str = getcwd(NULL,0);
+		if(!str)
+		{
+			ft_getpwd(*env);
+		}
+		ft_putstr(str,1);
 		ft_putstr("\n",1);
+		free(str);
 		return(1);
 	}else if (!ft_strcmp("env",data->arg[0]) && !data->arg[1])
 	{	
-		ft_env(env,0);
+		ft_env(*env,0);
 		return(1);
 	}else if (!ft_strcmp("export",data->arg[0]))
 	{
 		if(!data->arg[1])
-			ft_env(env,1);
+			ft_env(*env,1);
 		else
-			;
+			ft_export(env,&data->arg[1]);
 		return(1);
-		
 	}else if(!ft_strcmp("cd",data->arg[0]))
 	{
-
+		if(data->arg[1])
+			{
+				if(!ft_strcmp(data->arg[1],"-"))
+					{
+					n = chdir(ft_search_env(*env,"OLDPWD"));
+					if(n == 0)
+						{
+						str = getcwd(NULL,0);
+						ft_putstr(str,2);
+						ft_putstr("\n",2);
+						}
+						free(str);
+					}
+				else if(!ft_strcmp(data->arg[1],"--"))
+					{
+						n = chdir(ft_search_env(*env,"HOME"));
+					}
+				else
+					n = chdir(data->arg[1]);
+			}
+		else 
+			n = chdir(ft_search_env(*env,"HOME"));
+		if(n == 0)
+			{
+				str = getcwd(NULL,0);
+				ft_search_inset(*env,(char *[]){"OLDPWD",ft_strdup(ft_search_env(*env,"PWD"))},1);
+				ft_search_inset(*env,(char *[]){"PWD",ft_strdup(str)},1);
+				free(str);
+				return (1);
+			}else
+				return (0);
+	}else if(!ft_strcmp("unset",data->arg[0]))
+	{
+		if(x==1){
+		ft_unset(*env,data->arg[1]);
+		}
+		return(1);
 	}
 	return (0);
 }
@@ -189,9 +257,9 @@ void ft_exection(t_data *data,t_env **env)
 			pipe(data->fd);
 		}else
 			{
-				if(!data->prev && ft_builtins(data,*env,1))
+				if(!data->prev && ft_builtins(data,env,1))
 				{
-
+					return ;
 				}
 			}
         data->pid = fork();
@@ -199,6 +267,7 @@ void ft_exection(t_data *data,t_env **env)
             (perror("fork"), exit(EXIT_FAILURE));
         if(data->pid==0)
         {
+			//system("leaks minishell");
             if(data->fdin==-1||data->fdout==-1)
                 exit(1);
           if(data->fdin > 2 )
@@ -221,9 +290,9 @@ void ft_exection(t_data *data,t_env **env)
                     dup2(data->fd[1],STDOUT_FILENO);
 				}
 			
-			if(!ft_builtins(data,*env,0))
+			if(!ft_builtins(data,env,0))
             	ft_exec_cmd(data, *env);
-			//system("leaks minishell");
+			//
             exit(0);
         }else{
 			if(data->prev)
@@ -297,7 +366,7 @@ void    ssig_handler(int sig)
     }
 }
 
-void ft_full_heredoc(t_heredoc **heredoc,t_list *list,t_env *env)
+int ft_full_heredoc(t_heredoc **heredoc,t_list *list,t_env *env)
 {
 	int fd[2];
 	char *h_doc;
@@ -308,6 +377,8 @@ void ft_full_heredoc(t_heredoc **heredoc,t_list *list,t_env *env)
 	
 	while (list)
 	{
+		if(ft_check_error(list))
+			return(1);
 		if (list->token == TOKEN_HEREDOC)
 		{
 			if (pipe(fd))
@@ -342,9 +413,10 @@ void ft_full_heredoc(t_heredoc **heredoc,t_list *list,t_env *env)
 		}
 		list = list->next;
 	}
+	return (0);
 }
 
-void ft_full_heredocc(t_heredoc **heredoc,t_list *list,t_env *env)
+int ft_full_heredocc(t_heredoc **heredoc,t_list *list,t_env *env)
 {
 	int fd[2];
 	char *h_doc;
@@ -354,6 +426,7 @@ void ft_full_heredocc(t_heredoc **heredoc,t_list *list,t_env *env)
 	
 	while (list)
 	{
+		
 		if (list->token == TOKEN_HEREDOC)
 		{
 			if (pipe(fd))
@@ -375,6 +448,7 @@ void ft_full_heredocc(t_heredoc **heredoc,t_list *list,t_env *env)
 		}
 		list = list->next;
 	}
+	return (0);
 }
 t_heredoc *free_next(t_heredoc *heredoc)
 {
@@ -384,7 +458,7 @@ t_heredoc *free_next(t_heredoc *heredoc)
 	free(temp);
 	return (heredoc);
 }
-void ft_full_data(t_list *list,t_data **data,t_env *env)
+int ft_full_data(t_list *list,t_data **data,t_env *env)
 {
 	int fdin;
 	int fdout;
@@ -394,7 +468,8 @@ void ft_full_data(t_list *list,t_data **data,t_env *env)
 	fdin = -2;
 	fdout = -2;
 	str = NULL;
-	ft_full_heredoc(&heredoc, list,env);
+	if(ft_full_heredoc(&heredoc, list,env))
+		return (1);
 	while (list)
 	{
 		if (list->token == TOKEN_WORD && ft_strcmp(list->content,(char[]){127,0}))
@@ -450,6 +525,7 @@ void ft_full_data(t_list *list,t_data **data,t_env *env)
 		}
 		list = list->next;
 	}
+	return (0);
 }
 
 void ft_full_datass(t_list *list,t_data **data)
@@ -688,7 +764,8 @@ void ft_full_env(t_env **data,char **envp)
 		env = ft_split(envp[i],3);
 		envp[i][j]='=';
 		ft_envadd_back(data,ft_envnew(env[0],env[1]));
-		free(env);
+		if(env)
+			free(env);
 		i++;
 	}
 }

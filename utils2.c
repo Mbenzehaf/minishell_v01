@@ -52,63 +52,100 @@ void ft_echo(char **str)
 
 void ft_cd(char *str)
 {
-
+    
 }
-int is_var(char *str)
+int is_var(char *str,int *equal,int *add)
 {
     int i;
-    int equal;
-    
-    equal = 0;
+    *equal = 0;
     i = 0;
     if(!ft_isalpha(str[i]) && str[i]!='_')
         return (1);
     while (str[i])
     {
-        if(!ft_isalpha(str[i]) && !ft_isdigit(str[i]) && str[i]!= '=' && !equal)
+        if(!ft_isalpha(str[i]) && !ft_isdigit(str[i]) && str[i]!= '=' && str[i]!= '_' && !*equal && str[i]!= '+' )
             return(1);
-        if(!equal && str[i]=='=')
+        if(!*equal && str[i]=='+' && str[i + 1]== '=')
             {
-                equal = 1;
+                *add = 1;
+                str[i] = 3;
+            }
+        if(!*equal && str[i]=='=')
+            {
+                *equal = 1;
                 str[i] = 3;
             }
         i++;
     }
     return (0);
 }
-int ft_search_inset(t_env *env,char **str)
+int ft_search_inset(t_env *env,char **str,int equal,int add)
 {
 while(env)
 {
     if(!ft_strcmp(env->var,str[0]))
     {
         if(str[1])
-        {
-            env->value =str[1];
-            return(0);
-        }
+            {
+                if(env->value && !add)
+                    free(env->value);
+                if(add)
+                env->value = ft_strjoin(env->value,str[1]);
+                else
+                env->value = str[1];
+            }
+       else if(equal)
+           {
+             if(env->value && !add)
+                    free(env->value);
+            if(!add)
+                env->value =ft_strdup("");
+            
+           }
+        return(0);
     }
     env = env->next;
 }
 return(1);
 }
+
+char *ft_search_env(t_env *env,char *str)
+{
+    while(env)
+    {
+        if(!ft_strcmp(env->var,str))
+            return(env->value);
+    env = env->next;
+    }
+    return(NULL);
+}
+
 void ft_export(t_env **env, char **str)
 {
     int i;
     char **arg;
+    int equal;
+    int add;
+
+    equal = 0;
+    add = 0;
     i = 0;
     while (str[i])
     {
-        if(!is_var(str[i]))
+        if(!is_var(str[i],&equal,&add))
         {
             arg = ft_split(str[i],3);
-            if(ft_search_inset(*env,arg))
+            if(ft_search_inset(*env,arg,equal,add))
             {
-            ft_envadd_back(env,ft_envnew(str[0],str[1]));
-            }
+            ft_envadd_back(env,ft_envnew(arg[0],arg[1]));
+            }else
+                free(arg[0]);
+            free(arg);
         }else
         {
-
+            ft_putstr("export: `", 2);
+            ft_putstr(str[i], 2);
+            ft_putstr("': not a valid identifier\n", 2);
         }
         i++;
     }
@@ -120,12 +157,19 @@ void ft_unset(t_env *env, char *str)
 {
     t_env *node;
 
+    node = env;
     while (env)
     {
-        if(env->next && !ft_strcmp(env->next->var,str))
+        if(!ft_strcmp(env->var,str))
         {
+            node->next = env->next;
+            env->next=NULL;
+            free(env->value);
+           free(env->var);
+          free(env);
             break ;
         }
+        node = env;
         env = env->next;
     }
     

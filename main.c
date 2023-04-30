@@ -44,11 +44,11 @@ int main(int ac,char *av[],char **envp)
         data = NULL;
         
         str = readline("\x1b[1;36mMinish$>\x1b[1;0m \x1b[1;38m");
+        //printf("%s\n",str);
        ft_putstr("\x1b[0;0m",1);
         if(str)
         {
         ft_spl(str,&list,env);
-        
         ft_full_data(list,&data,env);
         ft_exection(data,&env);
         add_history(str);
